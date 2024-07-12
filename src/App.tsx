@@ -1,22 +1,29 @@
 import "./App.css";
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import * as React from 'react';
 import * as fabric from 'fabric'; // v6
 import DownloadJSON from './DownloadJSON';
 
-class LabeledRect extends fabric.Rect {
-  constructor(options) {
+export interface LabeledRectProps extends fabric.RectProps {
+  label: string;
+}
+
+export class LabeledRect extends fabric.Rect {
+  options: Partial<LabeledRectProps>;
+  label: string;
+
+  constructor(options: Partial<LabeledRectProps>) {
     super(options);
     this.options = options || {};
-    this.label = this.options.label;
+    this.label = this.options.label || '';
 
   }
 
-  setLabel(label) {
+  setLabel(label: string) {
     this.label = label;
     this.options.label = label;
   }
-  _render(ctx) {
+  _render(ctx: CanvasRenderingContext2D) {
     super._render(ctx);
     ctx.font = '15px Helvetica';
     ctx.fillStyle = 'black';
@@ -25,10 +32,10 @@ class LabeledRect extends fabric.Rect {
 };
 
 export const App = () => {
-  const [canvas, setCanvas] = useState('');
-  const [selectedObject, setSelectedObject] = useState('');
-  const [snapshotJSON, setSnapshotJSON] = useState('');
-  const [loadedJSON, setLoadedJSON] = useState('');
+  const [canvas, setCanvas] = React.useState<fabric.Canvas>();
+  const [selectedObject, setSelectedObject] = React.useState<LabeledRect>();
+  const [snapshotJSON, setSnapshotJSON] = React.useState<string>('');
+  const [loadedJSON, setLoadedJSON] = React.useState<string>('');
   const labelInputRef = useRef();
   const occupiedInputRef = useRef();
 
@@ -52,7 +59,7 @@ export const App = () => {
     }
   }, []);
 
-  const addSquare = parentCanvas => {
+  const addSquare = (parentCanvas: fabric.Canvas) => {
     const shape = new LabeledRect({
       top: 50,
       left: 50,
@@ -63,11 +70,12 @@ export const App = () => {
       fill: 'white',
       label: 'Table'
     });
+
     parentCanvas.add(shape);
     parentCanvas.renderAll();
   }
 
-  const addDiamond = parentCanvas => {
+  const addDiamond = (parentCanvas: fabric.Canvas) => {
     const shape = new LabeledRect({
       top: 50,
       left: 50,
@@ -83,47 +91,38 @@ export const App = () => {
     parentCanvas.renderAll();
   }
 
-  const addText = parentCanvas => {
-    const text = new fabric.Textbox('Table', {
-      fontSize: 20,
-      originX: 'center',
-      originX: 'center' 
-    });
-    parentCanvas.add(text);
-    parentCanvas.renderAll();
-  }
-
-  const clearCanvas = parentCanvas => {
-    parentCanvas.remove(...canvas.getObjects());
-    setSelectedObject('');
+  const clearCanvas = (parentCanvas: fabric.Canvas) => {
+    parentCanvas.remove(...parentCanvas.getObjects());
+    setSelectedObject(undefined);
     labelInputRef.current.value = '';
     occupiedInputRef.current.value = '';
   }
 
-  const handleMouseDown = event => {
+  const handleMouseDown = (event: MouseEvent) => {
     if (event.target) {
-      setSelectedObject(event.target);
-      labelInputRef.current.value = event.target.options.label;
-      occupiedInputRef.current.value = event.target.options.fill === 'green' ? 'y' : 'n';
+      let target: LabeledRect = event.target as unknown as LabeledRect;
+      setSelectedObject(target);
+      labelInputRef.current.value = target.label;
+      occupiedInputRef.current.value = target.options.fill === 'green' ? 'y' : 'n';
       console.log(event.target);
     } else {
-      setSelectedObject('');
+      setSelectedObject(undefined);
     }
   }
 
-  const deleteSelection = (parentCanvas, obj) => {
+  const deleteSelection = (parentCanvas: fabric.Canvas, obj: LabeledRect) => {
     if (obj) {
       parentCanvas.remove(obj);
-      setSelectedObject('');
+      setSelectedObject(undefined);
     }
   }
 
-  const takeSnapshotJSON = parentCanvas => {
+  const takeSnapshotJSON = (parentCanvas: fabric.Canvas) => {
     let json = JSON.stringify(parentCanvas.toObject(['label']));
     setSnapshotJSON(json);
   }
 
-  const handleChange = e => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
     fileReader.readAsText(e.target.files[0], "UTF-8");
     fileReader.onload = e => {
@@ -132,23 +131,23 @@ export const App = () => {
     };
   }
 
-  const restoreFromLoadedFile = parentCanvas => {
+  const restoreFromLoadedFile = (parentCanvas: fabric.Canvas) => {
     let arrOriginal = [];
     let arr = [];
-    canvas.loadFromJSON(loadedJSON, function(o, object) {
+    parentCanvas.loadFromJSON(loadedJSON, function(o, object) {
       arrOriginal.push(object);
       arr.push(new LabeledRect(o));
     }).then(
-      (canvas) =>
+      (parentCanvas) =>
       {
         for (var item of arrOriginal) {
-          canvas.remove(item);
+          parentCanvas.remove(item);
         }
 
         for (var item of arr) {
-          canvas.add(item);
+          parentCanvas.add(item);
         }
-        canvas.requestRenderAll();
+        parentCanvas.requestRenderAll();
       }
       );
   }
@@ -182,7 +181,6 @@ export const App = () => {
       <div className='Buttons'>
         <button onClick={() => addSquare(canvas)}>Square</button>
         <button onClick={() => addDiamond(canvas)}>Diamond</button>
-        <button onClick={() => addText(canvas)}>Label Table</button>
         <button onClick={() => clearCanvas(canvas)}>Clear Canvas</button>
         <button onClick={() => deleteSelection(canvas, selectedObject)}>Delete Selection</button>
         <button onClick={() => takeSnapshotJSON(canvas, selectedObject)}>Snapshot JSON</button>
