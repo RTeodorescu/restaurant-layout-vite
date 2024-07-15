@@ -1,5 +1,4 @@
 import "./App.css";
-import { useEffect, useRef } from 'react';
 import * as React from 'react';
 import * as fabric from 'fabric'; // v6
 import DownloadJSON from './DownloadJSON';
@@ -36,10 +35,10 @@ export const App = () => {
   const [selectedObject, setSelectedObject] = React.useState<LabeledRect>();
   const [snapshotJSON, setSnapshotJSON] = React.useState<string>('');
   const [loadedJSON, setLoadedJSON] = React.useState<string>('');
-  const labelInputRef = useRef();
-  const occupiedInputRef = useRef();
+  const labelInputRef = React.useRef<HTMLInputElement>(null);
+  const occupiedInputRef = React.useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const options = { 
       width: 1000,
       height: 500,
@@ -49,7 +48,9 @@ export const App = () => {
     canvas.selectionColor = 'rgba(0,255,0,0.3)';
     canvas.selectionBorderColor = 'red';
     canvas.selectionLineWidth = 5;
-    canvas.on("mouse:down", handleMouseDown);
+    canvas.on("mouse:down", (event) => {
+      handleMouseDown(event as unknown as React.MouseEvent)
+    });
 
     setCanvas(canvas);
     canvas.renderAll();
@@ -94,20 +95,29 @@ export const App = () => {
   const clearCanvas = (parentCanvas: fabric.Canvas) => {
     parentCanvas.remove(...parentCanvas.getObjects());
     setSelectedObject(undefined);
-    labelInputRef.current.value = '';
-    occupiedInputRef.current.value = '';
+    if (labelInputRef.current){
+      labelInputRef.current.value = '';
+    }
+    if (occupiedInputRef.current) {
+      occupiedInputRef.current.value = '';
+    }
   }
 
-  const handleMouseDown = (event: MouseEvent) => {
+  const handleMouseDown = (event: React.MouseEvent) => {
     if (event.target) {
       let target: LabeledRect = event.target as unknown as LabeledRect;
       setSelectedObject(target);
-      labelInputRef.current.value = target.label;
-      occupiedInputRef.current.value = target.options.fill === 'green' ? 'y' : 'n';
+      if (labelInputRef.current) {
+        labelInputRef.current.value = target.label;
+      }
+      if (occupiedInputRef.current) {
+        occupiedInputRef.current.value = target.options.fill === 'green' ? 'y' : 'n';
+      }
       console.log(event.target);
     } else {
       setSelectedObject(undefined);
     }
+
   }
 
   const deleteSelection = (parentCanvas: fabric.Canvas, obj: LabeledRect) => {
@@ -123,28 +133,32 @@ export const App = () => {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileReader = new FileReader();
-    fileReader.readAsText(e.target.files[0], "UTF-8");
-    fileReader.onload = e => {
-      console.log("e.target.result", e.target.result);
-      setLoadedJSON(e.target.result);
+    if (e && e.target && e.target.files) {
+      const fileReader = new FileReader();
+      fileReader.readAsText(e.target.files[0], "UTF-8");
+      fileReader.onload = e => {
+        if (e && e.target && e.target.result) {
+          console.log("e.target.result", e.target.result);
+          setLoadedJSON(e.target.result as string);
+        }
+      }
     };
   }
 
   const restoreFromLoadedFile = (parentCanvas: fabric.Canvas) => {
-    let arrOriginal = [];
-    let arr = [];
+    let arrOriginal: fabric.Rect[] = [];
+    let arr: LabeledRect[] = [];
     parentCanvas.loadFromJSON(loadedJSON, function(o, object) {
-      arrOriginal.push(object);
+      arrOriginal.push(object as fabric.Rect);
       arr.push(new LabeledRect(o));
     }).then(
       (parentCanvas) =>
       {
-        for (var item of arrOriginal) {
+        for (let item of arrOriginal) {
           parentCanvas.remove(item);
         }
 
-        for (var item of arr) {
+        for (let item of arr) {
           parentCanvas.add(item);
         }
         parentCanvas.requestRenderAll();
@@ -152,41 +166,47 @@ export const App = () => {
       );
   }
 
-  const handleSubmit = (event) => {
-    let opt = selectedObject.options;
-    if (labelInputRef.current.value) {
-      opt.label = labelInputRef.current.value;
-    }
-    if (occupiedInputRef.current.value === 'y') {
-      opt.fill = 'green';
-    }
-    if (occupiedInputRef.current.value === 'n') {
-      opt.fill = 'white';
-    }
-    opt.left = selectedObject.left;
-    opt.top = selectedObject.top;
+  const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
+    if(canvas && selectedObject) {
+      let opt = selectedObject.options;
+      if (labelInputRef.current) {
+        if (labelInputRef.current.value) {
+          opt.label = labelInputRef.current.value;
+        }
+      }
+      if (occupiedInputRef.current) {
+        if (occupiedInputRef.current.value === 'y') {
+          opt.fill = 'green';
+        }
+        if (occupiedInputRef.current.value === 'n') {
+          opt.fill = 'white';
+        }
+      }
+      opt.left = selectedObject.left;
+      opt.top = selectedObject.top;
 
-    let obj = new LabeledRect(opt);
-    canvas.remove(selectedObject);
-    canvas.add(obj);
-    setSelectedObject(obj);
-    canvas.setActiveObject(obj);
-    canvas.renderAll();
-    event.preventDefault();
+      let obj = new LabeledRect(opt);
+      canvas.remove(selectedObject);
+      canvas.add(obj);
+      setSelectedObject(obj);
+      canvas.setActiveObject(obj);
+      canvas.renderAll();
+      event.preventDefault();
+    }
   };
 
   return(
     <div className='Canvas'>
       <h1>Restaurant Layout</h1>
       <div className='Buttons'>
-        <button onClick={() => addSquare(canvas)}>Square</button>
-        <button onClick={() => addDiamond(canvas)}>Diamond</button>
-        <button onClick={() => clearCanvas(canvas)}>Clear Canvas</button>
-        <button onClick={() => deleteSelection(canvas, selectedObject)}>Delete Selection</button>
-        <button onClick={() => takeSnapshotJSON(canvas, selectedObject)}>Snapshot JSON</button>
+        <button onClick={() => addSquare(canvas as fabric.Canvas)}>Square</button>
+        <button onClick={() => addDiamond(canvas as fabric.Canvas)}>Diamond</button>
+        <button onClick={() => clearCanvas(canvas as fabric.Canvas)}>Clear Canvas</button>
+        <button onClick={() => deleteSelection(canvas as fabric.Canvas, selectedObject as LabeledRect)}>Delete Selection</button>
+        <button onClick={() => takeSnapshotJSON(canvas as fabric.Canvas)}>Snapshot JSON</button>
         <DownloadJSON data={snapshotJSON} fileName="canvasJSON" />
         <input type="file" onChange={handleChange} />
-        <button onClick={() => restoreFromLoadedFile(canvas)}>Restore From Loaded File</button>
+        <button onClick={() => restoreFromLoadedFile(canvas as fabric.Canvas)}>Restore From Loaded File</button>
 
       </div>
 
