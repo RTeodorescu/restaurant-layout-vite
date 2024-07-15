@@ -7,6 +7,10 @@ export interface LabeledRectProps extends fabric.RectProps {
   label: string;
 }
 
+export interface LabeledEllipseProps extends fabric.EllipseProps {
+  label: string;
+}
+
 export class LabeledRect extends fabric.Rect {
   options: Partial<LabeledRectProps>;
   label: string;
@@ -30,9 +34,32 @@ export class LabeledRect extends fabric.Rect {
   }
 };
 
+export class LabeledEllipse extends fabric.Ellipse {
+  options: Partial<LabeledEllipseProps>;
+  label: string;
+
+  constructor(options: Partial<LabeledEllipseProps>) {
+    super(options);
+    this.options = options || {};
+    this.label = this.options.label || '';
+
+  }
+
+  setLabel(label: string) {
+    this.label = label;
+    this.options.label = label;
+  }
+  _render(ctx: CanvasRenderingContext2D) {
+    super._render(ctx);
+    ctx.font = '15px Helvetica';
+    ctx.fillStyle = 'black';
+    ctx.fillText(this.label, -this.width/2 + 50, -this.height/2 + 50);
+  }
+};
+
 export const App = () => {
   const [canvas, setCanvas] = React.useState<fabric.Canvas>();
-  const [selectedObject, setSelectedObject] = React.useState<LabeledRect>();
+  const [selectedObject, setSelectedObject] = React.useState<fabric.FabricObject>();
   const [snapshotJSON, setSnapshotJSON] = React.useState<string>('');
   const [loadedJSON, setLoadedJSON] = React.useState<string>('');
   const labelInputRef = React.useRef<HTMLInputElement>(null);
@@ -92,6 +119,22 @@ export const App = () => {
     parentCanvas.renderAll();
   }
 
+  const addCircle = (parentCanvas: fabric.Canvas) => {
+    const shape = new LabeledEllipse({
+      top: 50,
+      left: 50,
+      rx: 80,
+      ry: 80,
+      strokeWidth: 1,
+      stroke: 'blue',
+      fill: 'white',
+      label: 'Table'
+    });
+
+    parentCanvas.add(shape);
+    parentCanvas.renderAll();
+  }
+
   const clearCanvas = (parentCanvas: fabric.Canvas) => {
     parentCanvas.remove(...parentCanvas.getObjects());
     setSelectedObject(undefined);
@@ -104,20 +147,27 @@ export const App = () => {
   }
 
   const handleMouseDown = (event: React.MouseEvent) => {
-    if (event.target) {
-      let target: LabeledRect = event.target as unknown as LabeledRect;
-      setSelectedObject(target);
-      if (labelInputRef.current) {
-        labelInputRef.current.value = target.label;
-      }
-      if (occupiedInputRef.current) {
-        occupiedInputRef.current.value = target.options.fill === 'green' ? 'y' : 'n';
-      }
-      console.log(event.target);
-    } else {
+      if (event.target && 
+        (event.target instanceof LabeledRect || event.target instanceof LabeledEllipse )
+      ) {
+        let target: fabric.FabricObject = event.target as unknown as fabric.FabricObject;
+
+        setSelectedObject(target);
+        
+        if (labelInputRef.current && 
+          (target instanceof LabeledRect || target instanceof LabeledEllipse)) {
+            labelInputRef.current.value = target.label;
+        }
+
+        if (occupiedInputRef.current && 
+          (target instanceof LabeledRect || target instanceof LabeledEllipse)
+        ) {
+            occupiedInputRef.current.value = target.options.fill === 'green' ? 'y' : 'n';
+        }
+        console.log(event.target);
+    } else {      
       setSelectedObject(undefined);
     }
-
   }
 
   const deleteSelection = (parentCanvas: fabric.Canvas, obj: LabeledRect) => {
@@ -167,7 +217,8 @@ export const App = () => {
   }
 
   const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
-    if(canvas && selectedObject) {
+    if(canvas && selectedObject && 
+      (selectedObject instanceof LabeledRect || selectedObject instanceof LabeledEllipse )) {
       let opt = selectedObject.options;
       if (labelInputRef.current) {
         if (labelInputRef.current.value) {
@@ -185,13 +236,22 @@ export const App = () => {
       opt.left = selectedObject.left;
       opt.top = selectedObject.top;
 
-      let obj = new LabeledRect(opt);
-      canvas.remove(selectedObject);
-      canvas.add(obj);
-      setSelectedObject(obj);
-      canvas.setActiveObject(obj);
-      canvas.renderAll();
-      event.preventDefault();
+      let obj = null;
+      if (selectedObject instanceof LabeledRect) {
+        obj = new LabeledRect(opt);
+      }
+      if (selectedObject instanceof LabeledEllipse) {
+        obj = new LabeledEllipse(opt);
+      }
+
+      if (obj){
+        canvas.remove(selectedObject);
+        canvas.add(obj);
+        setSelectedObject(obj);
+        canvas.setActiveObject(obj);
+        canvas.renderAll();
+        event.preventDefault();
+      }
     }
   };
 
@@ -201,6 +261,7 @@ export const App = () => {
       <div className='Buttons'>
         <button onClick={() => addSquare(canvas as fabric.Canvas)}>Square</button>
         <button onClick={() => addDiamond(canvas as fabric.Canvas)}>Diamond</button>
+        <button onClick={() => addCircle(canvas as fabric.Canvas)}>Circle</button>
         <button onClick={() => clearCanvas(canvas as fabric.Canvas)}>Clear Canvas</button>
         <button onClick={() => deleteSelection(canvas as fabric.Canvas, selectedObject as LabeledRect)}>Delete Selection</button>
         <button onClick={() => takeSnapshotJSON(canvas as fabric.Canvas)}>Snapshot JSON</button>
