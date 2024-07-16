@@ -46,6 +46,7 @@ Other links:
 To run this just run 'npm run dev' in a terminal (all develpment work was done on mac using chrome; latest node version; latest react version; fabric.js v6.0.x)
 Collaboration Doc Link: https://docs.google.com/document/d/12OZPseCMDbUplVtwIry8x9yOj_xjKs8bS5PHEsk31ck/edit
 
+Please install the following packages in addtion to the previous ones:
 npm install react-hook-form
 npm install -D tailwindcss postcss autoprefixer
 npm install -D @tailwindcss/forms
