@@ -2,58 +2,134 @@ import "./App.css";
 import * as React from 'react';
 import * as fabric from 'fabric'; // v6
 import DownloadJSON from './DownloadJSON';
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+
+interface UserInput {
+  label: string;
+  section: string;
+  occupied: boolean;
+}
+
+const defaultValues: UserInput = {
+  label: "",
+  section: "",
+  occupied: false,
+};
+
+const validationSchema = yup.object({
+  label: yup
+    .string()
+    .required("Label is required")
+    .max(10, "Label is too long - max 10"),
+  section: yup
+    .string()
+    .required("Section is required")
+    .max(10, "Section is too long - max 10"),
+  occupied: yup
+    .boolean(),
+});
 
 export interface LabeledRectProps extends fabric.RectProps {
   label: string;
+  section: string;
+  occupied: boolean;
+  customType: string;
 }
 
 export interface LabeledEllipseProps extends fabric.EllipseProps {
   label: string;
+  section: string;
+  occupied: boolean;
+  customType: string;
 }
 
 export class LabeledRect extends fabric.Rect {
   options: Partial<LabeledRectProps>;
   label: string;
+  section: string;
+  occupied: boolean;
+  customType: string;
 
   constructor(options: Partial<LabeledRectProps>) {
     super(options);
     this.options = options || {};
     this.label = this.options.label || '';
-
+    this.section = this.options.section || '';
+    this.occupied = this.options.occupied || false;
+    this.customType = this.options.customType || '';
   }
 
   setLabel(label: string) {
     this.label = label;
     this.options.label = label;
   }
+
+  setSection(section: string) {
+    this.section = section;
+    this.options.section = section;
+  }
+
+  setOccupied(occupied: boolean) {
+    this.occupied = occupied;
+    this.options.occupied = occupied;
+  }
+
+  setCustomType(customType: string) {
+    this.customType = customType;
+    this.options.customType = customType;
+  }
+
   _render(ctx: CanvasRenderingContext2D) {
     super._render(ctx);
     ctx.font = '15px Helvetica';
     ctx.fillStyle = 'black';
-    ctx.fillText(this.label, -this.width/2 + 20, -this.height/2 + 20);
+    ctx.fillText(this.section + '-' + this.label, -this.width/2 + 20, -this.height/2 + 20);
   }
 };
 
 export class LabeledEllipse extends fabric.Ellipse {
   options: Partial<LabeledEllipseProps>;
   label: string;
+  section: string;
+  occupied: boolean;
+  customType: string;
 
   constructor(options: Partial<LabeledEllipseProps>) {
     super(options);
     this.options = options || {};
     this.label = this.options.label || '';
-
+    this.section = this.options.section || '';
+    this.occupied = this.options.occupied || false;
+    this.customType = this.options.customType || '';
   }
 
   setLabel(label: string) {
     this.label = label;
     this.options.label = label;
   }
+
+  setSection(section: string) {
+    this.section = section;
+    this.options.section = section;
+  }
+
+  setOccupied(occupied: boolean) {
+    this.occupied = occupied;
+    this.options.occupied = occupied;
+  }
+
+  setCustomType(customType: string) {
+    this.customType = customType;
+    this.options.customType = customType;
+  }
+
   _render(ctx: CanvasRenderingContext2D) {
     super._render(ctx);
     ctx.font = '15px Helvetica';
     ctx.fillStyle = 'black';
-    ctx.fillText(this.label, -this.width/2 + 50, -this.height/2 + 50);
+    ctx.fillText(this.section + '-' + this.label, -this.width/2 + 50, -this.height/2 + 50);
   }
 };
 
@@ -62,8 +138,16 @@ export const App = () => {
   const [selectedObject, setSelectedObject] = React.useState<fabric.FabricObject>();
   const [snapshotJSON, setSnapshotJSON] = React.useState<string>('');
   const [loadedJSON, setLoadedJSON] = React.useState<string>('');
-  const labelInputRef = React.useRef<HTMLInputElement>(null);
-  const occupiedInputRef = React.useRef<HTMLInputElement>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }, // get errors of the form
+    setValue,
+  } = useForm<UserInput>({
+    defaultValues,
+    resolver: yupResolver<UserInput>(validationSchema as yup.ObjectSchema<UserInput>),
+    mode: "onTouched", // default is "onSubmit"
+  })
 
   React.useEffect(() => {
     const options = { 
@@ -96,7 +180,10 @@ export const App = () => {
       strokeWidth: 1,
       stroke: 'blue',
       fill: 'white',
-      label: 'Table'
+      label: 'Table',
+      section: 'S',
+      occupied: false,
+      customType: 'square/LabeledRect'
     });
 
     parentCanvas.add(shape);
@@ -113,7 +200,10 @@ export const App = () => {
       stroke: 'blue',
       fill: 'white',
       angle: -45,
-      label: 'Table'
+      label: 'Table',
+      section: 'S',
+      occupied: false,
+      customType: 'diamond/LabeledRect'
     });
     parentCanvas.add(shape);
     parentCanvas.renderAll();
@@ -123,12 +213,15 @@ export const App = () => {
     const shape = new LabeledEllipse({
       top: 50,
       left: 50,
-      rx: 80,
-      ry: 80,
+      rx: 25,
+      ry: 25,
       strokeWidth: 1,
       stroke: 'blue',
       fill: 'white',
-      label: 'Table'
+      label: 'Table',
+      section: 'S',
+      occupied: false,
+      customType: 'circle/LabeledEllipse'
     });
 
     parentCanvas.add(shape);
@@ -138,12 +231,9 @@ export const App = () => {
   const clearCanvas = (parentCanvas: fabric.Canvas) => {
     parentCanvas.remove(...parentCanvas.getObjects());
     setSelectedObject(undefined);
-    if (labelInputRef.current){
-      labelInputRef.current.value = '';
-    }
-    if (occupiedInputRef.current) {
-      occupiedInputRef.current.value = '';
-    }
+    setValue("label", defaultValues.label);
+    setValue("section", defaultValues.section);
+    setValue("occupied", defaultValues.occupied);
   }
 
   const handleMouseDown = (event: React.MouseEvent) => {
@@ -153,16 +243,11 @@ export const App = () => {
         let target: fabric.FabricObject = event.target as unknown as fabric.FabricObject;
 
         setSelectedObject(target);
-        
-        if (labelInputRef.current && 
-          (target instanceof LabeledRect || target instanceof LabeledEllipse)) {
-            labelInputRef.current.value = target.label;
-        }
-
-        if (occupiedInputRef.current && 
-          (target instanceof LabeledRect || target instanceof LabeledEllipse)
-        ) {
-            occupiedInputRef.current.value = target.options.fill === 'green' ? 'y' : 'n';
+        if (target instanceof LabeledRect || target instanceof LabeledEllipse) {
+          setValue("label", target.label);
+          setValue("section", target.section);
+          // setValue("occupied", target.options.fill === 'green' ? true : false);
+          setValue("occupied", target.occupied);
         }
         console.log(event.target);
     } else {      
@@ -178,7 +263,7 @@ export const App = () => {
   }
 
   const takeSnapshotJSON = (parentCanvas: fabric.Canvas) => {
-    let json = JSON.stringify(parentCanvas.toObject(['label']));
+    let json = JSON.stringify(parentCanvas.toObject(['label', 'section', 'occupied', 'customType']));
     setSnapshotJSON(json);
   }
 
@@ -216,49 +301,45 @@ export const App = () => {
       );
   }
 
-  const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
+  const onSubmitHandler = (userInput: UserInput) => {
+    console.log('Submitted');
+    console.table(userInput);
     if(canvas && selectedObject && 
       (selectedObject instanceof LabeledRect || selectedObject instanceof LabeledEllipse )) {
-      let opt = selectedObject.options;
-      if (labelInputRef.current) {
-        if (labelInputRef.current.value) {
-          opt.label = labelInputRef.current.value;
-        }
-      }
-      if (occupiedInputRef.current) {
-        if (occupiedInputRef.current.value === 'y') {
+        let opt = selectedObject.options;
+        opt.label = userInput.label;
+        opt.section = userInput.section;
+        opt.occupied = userInput.occupied;
+        if (userInput.occupied === true) {
           opt.fill = 'green';
-        }
-        if (occupiedInputRef.current.value === 'n') {
+        } else {
           opt.fill = 'white';
         }
-      }
-      opt.left = selectedObject.left;
-      opt.top = selectedObject.top;
+        opt.left = selectedObject.left;
+        opt.top = selectedObject.top;
 
-      let obj = null;
-      if (selectedObject instanceof LabeledRect) {
-        obj = new LabeledRect(opt);
-      }
-      if (selectedObject instanceof LabeledEllipse) {
-        obj = new LabeledEllipse(opt);
-      }
+        let obj = null;
+        if (selectedObject instanceof LabeledRect) {
+          obj = new LabeledRect(opt);
+        }
+        if (selectedObject instanceof LabeledEllipse) {
+          obj = new LabeledEllipse(opt);
+        }
 
-      if (obj){
-        canvas.remove(selectedObject);
-        canvas.add(obj);
-        setSelectedObject(obj);
-        canvas.setActiveObject(obj);
-        canvas.renderAll();
-        event.preventDefault();
-      }
+        if (obj){
+          canvas.remove(selectedObject);
+          canvas.add(obj);
+          setSelectedObject(obj);
+          canvas.setActiveObject(obj);
+          canvas.renderAll();
+        }
     }
-  };
+  }
 
   return(
-    <div className='Canvas'>
+    <main className='main prose'>
       <h1>Restaurant Layout</h1>
-      <div className='Buttons'>
+      <div className='form grid-cols-3'>
         <button onClick={() => addSquare(canvas as fabric.Canvas)}>Square</button>
         <button onClick={() => addDiamond(canvas as fabric.Canvas)}>Diamond</button>
         <button onClick={() => addCircle(canvas as fabric.Canvas)}>Circle</button>
@@ -271,27 +352,42 @@ export const App = () => {
 
       </div>
 
-      <div>
-        <form onSubmit={handleSubmit} style={{ margin: '20px' }}>
-          <h2>Table Properties</h2>
-          <label style={{ marginRight: '10px' }}>
-            Label:
-            <input type="text" ref={labelInputRef} style={{ marginLeft: '5px' }} />
-          </label>
-          <label style={{ marginRight: '10px' }}>
-            Occupied (y/n):
-            <input type="text" ref={occupiedInputRef} style={{ marginLeft: '5px' }} />
-          </label>
-          <button type="submit" style={{ display: 'block', marginTop: '10px' }}>
-            Update
-          </button>
-        </form>
-      </div>
+      <form onSubmit={handleSubmit(onSubmitHandler)} className="form">
+        <div className="group">
+          <label htmlFor="label">Label:</label>
+          <input {...register("label")} id="label" type="text" placeholder="Label"/>
+          {errors.label && (
+            <p className="error-message">{errors.label.message}</p>
+          )}
+        </div>
+
+        <div className="group">
+          <label htmlFor="section">Section:</label>
+          <input {...register("section")} id="section" type="text" placeholder="Section"/>
+          {errors.section && (
+            <p className="error-message">{errors.section.message}</p>
+          )}
+        </div>
+
+        <div className="group">
+        <label htmlFor="section">Occupied:</label>
+          <input
+            {...register("occupied")}
+            id="occupied"
+            type="checkbox"
+          />
+          {errors.occupied && (
+            <p className="error-message">{errors.occupied.message}</p>
+          )}
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
 
       <div>
         <canvas id="canvas" />
       </div>
-    </div>
+    </main>
   );
 };
 

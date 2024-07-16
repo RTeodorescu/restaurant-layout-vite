@@ -45,3 +45,18 @@ Other links:
 * https://thevalleyofcode.com/react/1-demo-setting-up-a-react-project-with-vite
 To run this just run 'npm run dev' in a terminal (all develpment work was done on mac using chrome; latest node version; latest react version; fabric.js v6.0.x)
 Collaboration Doc Link: https://docs.google.com/document/d/12OZPseCMDbUplVtwIry8x9yOj_xjKs8bS5PHEsk31ck/edit
+
+npm install react-hook-form
+npm install -D tailwindcss postcss autoprefixer
+npm install -D @tailwindcss/forms
+npm install -D @tailwindcss/typography
+npm install yup
+npm install -D @hookform/resolvers
+
+
+https://github.com/PranavB6/tutorials/blob/main/react-hook-form-basic-tutorial/react-hook-form-tutorial-end/README.md
+https://medium.com/@msgold/creating-a-react-form-using-react-hook-form-and-yup-in-typescript-640168c5ed57
+
+
+https://tailwindcss.com/docs/guides/vite
+npx tailwindcss init -p
