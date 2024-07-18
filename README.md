@@ -54,6 +54,10 @@ npm install -D @tailwindcss/typography
 npm install yup
 npm install -D @hookform/resolvers
 
+material UI:
+npm install @mui/material @emotion/react @emotion/styled
+npm install @mui/icons-material
+https://mui.com/material-ui/react-text-field/
 
 https://github.com/PranavB6/tutorials/blob/main/react-hook-form-basic-tutorial/react-hook-form-tutorial-end/README.md
 https://medium.com/@msgold/creating-a-react-form-using-react-hook-form-and-yup-in-typescript-640168c5ed57

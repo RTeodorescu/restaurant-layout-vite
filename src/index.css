@@ -1,4 +1,4 @@
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -39,7 +39,7 @@
   .form p.error-message {
     @apply mt-2 mb-0 text-red-500;
   }
-}
+}*/
 
 
 /*:root {
@@ -110,4 +110,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
-*/
+*/ 

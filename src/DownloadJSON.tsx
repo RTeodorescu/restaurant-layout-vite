@@ -1,6 +1,6 @@
-import React from 'react';
+import { Button } from "@mui/material";
 
-const DownloadJSON = ({ data, fileName }) => {
+const DownloadJSON = ({data, fileName}) => {
   const downloadJSON = () => {
     const jsonData = new Blob([data], { type: 'application/json' });
     const jsonURL = URL.createObjectURL(jsonData);
@@ -13,7 +13,7 @@ const DownloadJSON = ({ data, fileName }) => {
   };
 
   return (
-    <button onClick={downloadJSON}>Download JSON</button>
+    <Button onClick={downloadJSON}>Download JSON</Button>
   );
 }
 

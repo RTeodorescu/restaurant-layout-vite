@@ -6,6 +6,30 @@ import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 
+import { createTheme, ThemeProvider, Button, TextField, Paper, Checkbox,
+   ButtonGroup, FormControlLabel, Alert } from "@mui/material";
+import { blueGrey, lightBlue } from "@mui/material/colors";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { styled } from '@mui/material/styles';
+
+import {Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { light } from "@mui/material/styles/createPalette";
+
+export const theme = createTheme({
+  palette: {
+    primary: {
+      main: lightBlue[500],
+      light: lightBlue[300],
+      dark: lightBlue[700],
+    },
+    secondary: {
+      main: blueGrey[700],
+      light: blueGrey[500],
+    }
+  }
+})
+
 interface UserInput {
   label: string;
   section: string;
@@ -336,58 +360,168 @@ export const App = () => {
     }
   }
 
+  const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+    });
+
   return(
-    <main className='main prose'>
-      <h1>Restaurant Layout</h1>
-      <div className='form grid-cols-3'>
-        <button onClick={() => addSquare(canvas as fabric.Canvas)}>Square</button>
-        <button onClick={() => addDiamond(canvas as fabric.Canvas)}>Diamond</button>
-        <button onClick={() => addCircle(canvas as fabric.Canvas)}>Circle</button>
-        <button onClick={() => clearCanvas(canvas as fabric.Canvas)}>Clear Canvas</button>
-        <button onClick={() => deleteSelection(canvas as fabric.Canvas, selectedObject as LabeledRect)}>Delete Selection</button>
-        <button onClick={() => takeSnapshotJSON(canvas as fabric.Canvas)}>Snapshot JSON</button>
-        <DownloadJSON data={snapshotJSON} fileName="canvasJSON" />
-        <input type="file" onChange={handleChange} />
-        <button onClick={() => restoreFromLoadedFile(canvas as fabric.Canvas)}>Restore From Loaded File</button>
 
-      </div>
+    <ThemeProvider theme={theme}>
 
-      <form onSubmit={handleSubmit(onSubmitHandler)} className="form">
-        <div className="group">
-          <label htmlFor="label">Label:</label>
-          <input {...register("label")} id="label" type="text" placeholder="Label"/>
-          {errors.label && (
-            <p className="error-message">{errors.label.message}</p>
-          )}
-        </div>
+      <Accordion variant="outlined">
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="debug-content"
+          id="debug-panel-header"
+          >Debug
+        </AccordionSummary>
+        <AccordionDetails>
+          <Paper elevation={10} square={false}>
+            <ButtonGroup variant="outlined" aria-label="Debug">
+              <Button onClick={() => takeSnapshotJSON(canvas as fabric.Canvas)}>Snapshot JSON</Button>
+              <DownloadJSON data={snapshotJSON} fileName="canvasJSON" />
+              <Button onClick={() => restoreFromLoadedFile(canvas as fabric.Canvas)}>Restore From Loaded File</Button>
+              <Button component="label" role={undefined}
+                      tabIndex={-1} startIcon={<CloudUploadIcon />}
+                      
+              >Upload JSON
+                <VisuallyHiddenInput type="file" onChange={handleChange} />
+              </Button>
+            </ButtonGroup>
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
 
-        <div className="group">
-          <label htmlFor="section">Section:</label>
-          <input {...register("section")} id="section" type="text" placeholder="Section"/>
-          {errors.section && (
-            <p className="error-message">{errors.section.message}</p>
-          )}
-        </div>
+      <Accordion variant="outlined" defaultExpanded={true}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="shapes-content"
+          id="shapes-panel-header"
+          >Shapes
+        </AccordionSummary>
+        <AccordionDetails>
+          <Paper elevation={10} square={false}>
+            <ButtonGroup variant="outlined" aria-label="Shapes">
+              <Button onClick={() => addSquare(canvas as fabric.Canvas)}>Square</Button>
+              <Button onClick={() => addDiamond(canvas as fabric.Canvas)}>Diamond</Button>
+              <Button onClick={() => addCircle(canvas as fabric.Canvas)}>Circle</Button>
+              <Button onClick={() => deleteSelection(canvas as fabric.Canvas, selectedObject as LabeledRect || selectedObject as LabeledEllipse)}>Delete</Button>
+              <Button onClick={() => clearCanvas(canvas as fabric.Canvas)}>Clear Canvas</Button>
+            </ButtonGroup>
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
 
-        <div className="group">
-        <label htmlFor="section">Occupied:</label>
-          <input
-            {...register("occupied")}
-            id="occupied"
-            type="checkbox"
-          />
-          {errors.occupied && (
-            <p className="error-message">{errors.occupied.message}</p>
-          )}
-        </div>
+      <Accordion variant="outlined" defaultExpanded={true}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="editor-content"
+          id="editor-panel-header"
+          >Editor
+        </AccordionSummary>
+        <AccordionDetails>
+          <Paper elevation={10} square={false}>
+            <form onSubmit={handleSubmit(onSubmitHandler)}>
+              <Paper elevation={10} square={false}>
+                <TextField {...register("label")} id="label" label="Label"
+                variant="outlined" size="small" autoComplete="off"/>
+                {errors.label && (
+                  <Alert severity="error">{errors.label.message}</Alert>
+                )}
+              </Paper>
 
-        <button type="submit">Submit</button>
-      </form>
+              <Paper elevation={10} square={false}>
+                <TextField {...register("section")} id="section" label="Section"
+                variant="outlined" size="small" autoComplete="off"/>
+                {errors.section && (
+                  <Alert severity="error">{errors.section.message}</Alert>
+                )}
+              </Paper>
+
+              <Paper elevation={10} square={false}>
+                <FormControlLabel control={<Checkbox {...register("occupied")}
+                  id="occupied" />} label="Occupied" labelPlacement="start"/>
+                {errors.occupied && (
+                  <Alert severity="error">{errors.occupied.message}</Alert>
+                )}
+              </Paper>
+
+              <Paper elevation={10} square={false}>
+                <Button color="primary" variant="contained" type="submit">Update</Button>
+              </Paper>
+            </form>
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
 
       <div>
         <canvas id="canvas" />
       </div>
-    </main>
+
+    </ThemeProvider>
+
+
+    // <main className='main prose'>
+    //   <h1>Restaurant Layout</h1>
+    //   <div className='form grid-cols-3'>
+    //     <button onClick={() => addSquare(canvas as fabric.Canvas)}>Square</button>
+    //     <button onClick={() => addDiamond(canvas as fabric.Canvas)}>Diamond</button>
+    //     <button onClick={() => addCircle(canvas as fabric.Canvas)}>Circle</button>
+    //     <button onClick={() => clearCanvas(canvas as fabric.Canvas)}>Clear Canvas</button>
+    //     <button onClick={() => deleteSelection(canvas as fabric.Canvas, selectedObject as LabeledRect)}>Delete Selection</button>
+    //     <button onClick={() => takeSnapshotJSON(canvas as fabric.Canvas)}>Snapshot JSON</button>
+    //     <DownloadJSON data={snapshotJSON} fileName="canvasJSON" />
+    //     <input type="file" onChange={handleChange} />
+    //     <button onClick={() => restoreFromLoadedFile(canvas as fabric.Canvas)}>Restore From Loaded File</button>
+
+    //   </div>
+
+    //   <form onSubmit={handleSubmit(onSubmitHandler)} className="form">
+    //     <div className="group">
+    //       <label htmlFor="label">Label:</label>
+    //       <input {...register("label")} id="label" type="text" placeholder="Label"/>
+    //       {errors.label && (
+    //         <p className="error-message">{errors.label.message}</p>
+    //       )}
+    //     </div>
+
+    //     <div className="group">
+    //       <label htmlFor="section">Section:</label>
+    //       <input {...register("section")} id="section" type="text" placeholder="Section"/>
+    //       {errors.section && (
+    //         <p className="error-message">{errors.section.message}</p>
+    //       )}
+    //     </div>
+
+    //     <div className="group">
+    //     <label htmlFor="section">Occupied:</label>
+    //       <input
+    //         {...register("occupied")}
+    //         id="occupied"
+    //         type="checkbox"
+    //       />
+    //       {errors.occupied && (
+    //         <p className="error-message">{errors.occupied.message}</p>
+    //       )}
+    //     </div>
+
+    //     <button type="submit">Submit</button>
+    //   </form>
+
+    //   <div>
+    //     <canvas id="canvas" />
+    //   </div>
+    // </main>
+
+
   );
 };
 
