@@ -152,7 +152,7 @@ export class LabeledEllipse extends fabric.Ellipse {
     super._render(ctx);
     ctx.font = '15px Helvetica';
     ctx.fillStyle = 'black';
-    ctx.fillText(this.section + '-' + this.label, -this.width/2 + 50, -this.height/2 + 50);
+    ctx.fillText(this.section + '-' + this.label, -this.width/2, -this.height/2);
   }
 };
 
@@ -340,6 +340,8 @@ export const App = () => {
         }
         opt.left = selectedObject.left;
         opt.top = selectedObject.top;
+        opt.scaleX = selectedObject.scaleX;
+        opt.scaleY = selectedObject.scaleY;
 
         let obj = null;
         if (selectedObject instanceof LabeledRect) {
