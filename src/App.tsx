@@ -174,8 +174,8 @@ export const App = () => {
 
   React.useEffect(() => {
     const options = { 
-      width: 1000,
-      height: 500,
+      width: 700,
+      height: 400,
       backgroundColor: 'gray'
       };
     const canvas = new fabric.Canvas('canvas', options);
@@ -375,30 +375,6 @@ export const App = () => {
 
     <ThemeProvider theme={theme}>
 
-      <Accordion variant="outlined">
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="debug-content"
-          id="debug-panel-header"
-          >Debug
-        </AccordionSummary>
-        <AccordionDetails>
-          <Paper elevation={10} square={false}>
-            <ButtonGroup variant="outlined" aria-label="Debug">
-              <Button onClick={() => takeSnapshotJSON(canvas as fabric.Canvas)}>Snapshot JSON</Button>
-              <DownloadJSON data={snapshotJSON} fileName="canvasJSON" />
-              <Button onClick={() => restoreFromLoadedFile(canvas as fabric.Canvas)}>Restore From Loaded File</Button>
-              <Button component="label" role={undefined}
-                      tabIndex={-1} startIcon={<CloudUploadIcon />}
-                      
-              >Upload JSON
-                <VisuallyHiddenInput type="file" onChange={handleChange} />
-              </Button>
-            </ButtonGroup>
-          </Paper>
-        </AccordionDetails>
-      </Accordion>
-
       <Accordion variant="outlined" defaultExpanded={true}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
@@ -408,7 +384,7 @@ export const App = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Paper elevation={10} square={false}>
-            <ButtonGroup variant="outlined" aria-label="Shapes">
+            <ButtonGroup size="small" variant="outlined" aria-label="Shapes">
               <Button onClick={() => addSquare(canvas as fabric.Canvas)}>Square</Button>
               <Button onClick={() => addDiamond(canvas as fabric.Canvas)}>Diamond</Button>
               <Button onClick={() => addCircle(canvas as fabric.Canvas)}>Circle</Button>
@@ -447,23 +423,47 @@ export const App = () => {
 
               <Paper elevation={10} square={false}>
                 <FormControlLabel control={<Checkbox {...register("occupied")}
-                  id="occupied" />} label="Occupied" labelPlacement="start"/>
+                  size="small" id="occupied" />} label="Occupied" labelPlacement="start"/>
                 {errors.occupied && (
                   <Alert severity="error">{errors.occupied.message}</Alert>
                 )}
               </Paper>
 
               <Paper elevation={10} square={false}>
-                <Button color="primary" variant="contained" type="submit">Update</Button>
+                <Button size="small" color="primary" variant="contained" type="submit">Update</Button>
               </Paper>
             </form>
           </Paper>
         </AccordionDetails>
       </Accordion>
 
-      <div>
+      <Paper>
         <canvas id="canvas" />
-      </div>
+      </Paper>
+
+      <Accordion variant="outlined">
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="debug-content"
+          id="debug-panel-header"
+          >Debug
+        </AccordionSummary>
+        <AccordionDetails>
+          <Paper elevation={10} square={false}>
+            <ButtonGroup size="small" variant="outlined" aria-label="Debug">
+              <Button onClick={() => takeSnapshotJSON(canvas as fabric.Canvas)}>Snapshot JSON</Button>
+              <DownloadJSON data={snapshotJSON} fileName="canvasJSON" />
+              <Button onClick={() => restoreFromLoadedFile(canvas as fabric.Canvas)}>Restore From Loaded File</Button>
+              <Button component="label" role={undefined}
+                      tabIndex={-1} startIcon={<CloudUploadIcon />}
+                      
+              >Upload JSON
+                <VisuallyHiddenInput type="file" onChange={handleChange} />
+              </Button>
+            </ButtonGroup>
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
 
     </ThemeProvider>
 
