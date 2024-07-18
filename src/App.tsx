@@ -14,7 +14,6 @@ import { styled } from '@mui/material/styles';
 
 import {Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { light } from "@mui/material/styles/createPalette";
 
 export const theme = createTheme({
   palette: {
